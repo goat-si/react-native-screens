@@ -155,6 +155,7 @@ static id RNSAddObserverRemovedWithSearchField(
 #endif
 
   _controller.searchBar.delegate = self;
+  _controller.delegate = self;
 
   _isObscureBackgroundSet = NO;
   _isHideNavigationBarSet = NO;
@@ -387,6 +388,16 @@ static id RNSAddObserverRemovedWithSearchField(
 {
   [self emitOnBlurEvent];
   [self hideCancelButton];
+}
+
+// iOS 26+ integrated search closes from its own X without the cancel button delegate,
+// and without a blur when the keyboard is already down; report the dismissal itself.
+- (void)didDismissSearchController:(UISearchController *)searchController
+{
+  if (_eventEmitter != nullptr) {
+    std::dynamic_pointer_cast<const react::RNSSearchBarEventEmitter>(_eventEmitter)
+        ->onClose(react::RNSSearchBarEventEmitter::OnClose{});
+  }
 }
 
 - (void)searchBar:(UISearchBar *)searchBar textDidChange:(NSString *)searchText
